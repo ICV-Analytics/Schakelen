@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schakelen — van stilstand naar 80 km/u</title>
+<style>
+:root{--ink:#eaf0ff;--muted:#8b97b6;--blue:#3ab7ff;--green:#33e089;--red:#ff4b5c;--amber:#ffbf3f}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#060913;color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;overflow:hidden}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px}
+#wrap{position:relative;flex:none}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;overflow:hidden;border-radius:16px;background:#0b1222;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+#cv{position:absolute;left:0;top:0;width:1600px;height:900px;display:block}
+.ov{position:absolute;pointer-events:none}
+#chapter{left:24px;top:20px;font-weight:700;font-size:20px;padding:8px 16px 8px 10px;border-radius:12px;background:rgba(8,14,30,.78);display:flex;align-items:center;gap:10px}
+#chapter .num{background:var(--blue);color:#04111f;border-radius:8px;padding:2px 9px;font-size:15px;font-weight:800}
+#chapter.warn .num{background:var(--red);color:#fff}
+#banner{left:24px;top:74px;padding:8px 14px;border-radius:10px;background:linear-gradient(90deg,#ff3b4f,#ff7a3b);color:#fff;font-weight:800;font-size:17px;letter-spacing:.06em;opacity:0;box-shadow:0 0 30px rgba(255,60,80,.5)}
+#slow{left:24px;top:74px;padding:7px 14px;border-radius:10px;background:rgba(58,183,255,.18);border:2px solid var(--blue);color:#bfe8ff;font-weight:800;font-size:16px;letter-spacing:.12em;opacity:0}
+#legend{right:24px;top:20px;font-size:13px;color:#c6d0ea;background:rgba(8,14,30,.78);padding:9px 13px;border-radius:12px;display:flex;flex-direction:column;gap:5px}
+#legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.cap{left:800px;top:122px;min-width:380px;max-width:960px;padding:14px 28px 14px 18px;border-radius:16px;background:rgba(9,15,32,.88);border:2px solid rgba(255,255,255,.14);box-shadow:0 10px 40px rgba(0,0,0,.45);display:flex;align-items:center;gap:16px;opacity:0;white-space:nowrap}
+.cap .ic{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:21px;color:#05101e;background:var(--blue)}
+.cap .ct{font-size:30px;font-weight:800;line-height:1.1}
+.cap .cs{font-size:17px;color:#b9c4e0;margin-top:4px}
+.cap.k-action{border-color:rgba(58,183,255,.75);box-shadow:0 0 34px rgba(58,183,255,.35)}
+.cap.k-success,.cap.k-bite,.cap.k-zone{border-color:rgba(51,224,137,.85);box-shadow:0 0 40px rgba(51,224,137,.4)}
+.cap.k-success .ic,.cap.k-bite .ic,.cap.k-zone .ic{background:var(--green)}
+.cap.k-bite .ct{color:#8dffc4}
+.cap.k-warn{border-color:var(--red);background:rgba(54,6,16,.92);box-shadow:0 0 50px rgba(255,60,80,.6)}
+.cap.k-warn .ic{background:var(--red);color:#fff}
+.cap.k-warn .ct{color:#ffb3bb}
+.cap.k-warnq{border-color:var(--amber);box-shadow:0 0 40px rgba(255,190,60,.4)}
+.cap.k-warnq .ic{background:var(--amber)}
+.cap.k-info .ic{background:#c9d4ef}
+#chips{left:800px;top:216px;display:flex;gap:8px;opacity:0}
+.chip{padding:7px 13px;border-radius:999px;font-size:15px;font-weight:700;background:rgba(9,15,32,.86);color:#7f8bab;border:2px solid rgba(255,255,255,.1);white-space:nowrap}
+.chip.on{color:#04111f;background:var(--blue);border-color:#9fdcff;box-shadow:0 0 22px rgba(58,183,255,.75)}
+.chip.done{color:var(--green);border-color:rgba(51,224,137,.5)}
+.chip .n{opacity:.65;margin-right:6px}
+#tip{left:24px;top:472px;max-width:540px;padding:12px 16px;border-radius:14px;background:rgba(9,15,32,.9);border-left:5px solid var(--amber);font-size:18px;line-height:1.35;opacity:0}
+#tip b{color:var(--amber)}
+#big{left:800px;top:236px;text-align:center;opacity:0;width:1300px}
+#big .bt{font-size:68px;font-weight:900;letter-spacing:-.01em;text-shadow:0 6px 30px rgba(0,0,0,.65)}
+#big .bs{font-size:25px;color:#eef3ff;margin-top:8px;text-shadow:0 3px 14px rgba(0,0,0,.8)}
+#final{left:0;top:0;width:1600px;height:612px;display:grid;place-items:center;opacity:0}
+.fcard{width:860px;padding:26px 40px 28px;border-radius:24px;background:linear-gradient(160deg,rgba(12,32,40,.95),rgba(10,16,34,.95));border:2px solid rgba(51,224,137,.75);box-shadow:0 0 80px rgba(51,224,137,.35);text-align:center}
+.fcard .stars{font-size:38px;color:#ffd24a;letter-spacing:12px}
+.fcard h1{font-size:76px;font-weight:900;line-height:1.05;background:linear-gradient(90deg,#7dffb8,#3ab7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fcard p{font-size:20px;color:#c8d3ee;margin:8px 0 18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stats div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 6px}
+.stats b{display:block;font-size:30px;color:#7dffb8}
+.stats span{font-size:14px;color:#a9b5d3}
+#again{margin-top:18px;font:inherit;font-size:18px;font-weight:700;padding:10px 22px;border-radius:12px;border:0;background:var(--green);color:#04140b;cursor:pointer}
+#bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;background:#0d1426;border:1px solid #1d2742;border-radius:12px;flex:none}
+#bar button,#bar select{font:inherit;font-size:14px;color:var(--ink);background:#18223b;border:1px solid #2a3758;border-radius:8px;padding:6px 12px;cursor:pointer;min-height:34px}
+#bar button:hover{background:#22305200;border-color:#3ab7ff}
+#play{min-width:46px;font-weight:800}
+#time{font-variant-numeric:tabular-nums;font-size:14px;color:#b9c4e0;min-width:92px}
+#scrubWrap{position:relative;flex:1;min-width:200px;height:34px;display:flex;align-items:center}
+#scrub{width:100%;accent-color:var(--blue);position:relative;z-index:1;background:transparent}
+#ticks{position:absolute;left:0;right:0;top:3px;height:6px}
+#ticks span{position:absolute;width:3px;height:7px;border-radius:2px;background:#5b6a93;transform:translateX(-1px)}
+#ticks span.w{background:var(--red)}
+.tg{font-size:14px;color:#c6d0ea;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.tg input{accent-color:var(--red);width:16px;height:16px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="wrap">
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="chapter" class="ov"><span class="num">01</span><span class="lb">Intro</span></div>
+      <div id="banner" class="ov"></div>
+      <div id="slow" class="ov">◷ SLOW-MOTION</div>
+      <div id="legend" class="ov">
+        <div><i style="background:#3ab7ff"></i>Blauw = koppeling / pook · bereik versnelling</div>
+        <div><i style="background:#33e089"></i>Groen = gas · aangrijpingspunt · goed</div>
+        <div><i style="background:#ff4b5c"></i>Rood = fout / waarschuwing</div>
+      </div>
+      <div id="capMain" class="ov cap"><div class="ic">●</div><div class="tx"><div class="ct"></div><div class="cs"></div></div></div>
+      <div id="chips" class="ov"></div>
+      <div id="tip" class="ov"></div>
+      <div id="big" class="ov"><div class="bt"></div><div class="bs"></div></div>
+      <div id="final" class="ov">
+        <div class="fcard">
+          <div class="stars">★★★</div>
+          <h1>Perfect Gereden!</h1>
+          <p>Soepel weggereden en vloeiend doorgeschakeld — het verkeer rijdt ontspannen met je mee.</p>
+          <div class="stats">
+            <div><b>4×</b><span>soepel opgeschakeld</span></div>
+            <div><b>80</b><span>km/u in de 5e</span></div>
+            <div><b>±1950</b><span>tpm — rustig &amp; zuinig</span></div>
+            <div><b>0</b><span>keer verkeer gehinderd</span></div>
+          </div>
+          <button id="again">↺ Opnieuw bekijken</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="play" title="Afspelen / pauzeren (spatie)">❚❚</button>
+    <button id="restart" title="Vanaf het begin">↺</button>
+    <span id="time">0:00 / 0:00</span>
+    <div id="scrubWrap"><div id="ticks"></div><input id="scrub" type="range" min="0" max="100" step="any" value="0" aria-label="Tijdlijn"></div>
+    <select id="rate" title="Afspeelsnelheid">
+      <option value="0.5">0,5×</option><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.5">1,5×</option><option value="2">2×</option>
+    </select>
+    <label class="tg" title="Toon de 'Wat als…?' fout-inserts"><input type="checkbox" id="inserts" checked>Fout-inserts</label>
+    <button id="snd" title="Gesynthetiseerd motorgeluid">Geluid: uit</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* =========================================================================
+   Constanten
+   ========================================================================= */
+const W = 1600, H = 900;
+const HOR = 300;            // horizon (px)
+const F = 715;              // focale lengte (px)
+const CAMH = 2.4;           // camerahoogte (m)
+const CAMB = 5.5;           // camera achter de auto (m)
+const SEG = 5;              // segmentlengte weg (m)
+const NSEG = 72;            // zichtbare segmenten
+const RW = 3.6;             // halve wegbreedte (m)
+const CAMX = 1.75;          // wij rijden op de rechterbaan
+const FONT = '"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif';
+// km/u per 1000 tpm per versnelling — afgestemd op de richtlijnen:
+// 1e 0–20 · 2e 20–40 · 3e 40–60 · 4e 60–80 · 5e 80–100 km/u (opschakelen bij ± 2000–2500 tpm)
+const RATIO = [0, 8.2, 16.5, 24.8, 33, 41];
+const SHIFT_LO = 2000, SHIFT_HI = 2500;
+const GEAR_RANGE = { 1: [0, 20], 2: [20, 40], 3: [40, 60], 4: [60, 80], 5: [80, 100] };
+
+const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, u) => a + (b - a) * u;
+const EASE = {
+  linear: u => u,
+  smooth: u => u * u * (3 - 2 * u),
+  in: u => u * u,
+  out: u => 1 - (1 - u) * (1 - u),
+  acc: u => u * u * (2 - u),           // begint rustig, blijft versnellen
+  step: () => 0
+};
+const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/* =========================================================================
+   Keyframe-track (deterministisch => vrij scrubben)
+   ========================================================================= */
+class Track {
+  constructor(v) { this.k = [{ t: -1, v, e: 'linear' }]; this.sorted = true; }
+  add(t, v, e = 'smooth') { this.k.push({ t, v, e }); this.sorted = false; }
+  at(t) {
+    if (!this.sorted) { this.k.sort((a, b) => a.t - b.t); this.sorted = true; }
+    const k = this.k, n = k.length;
+    if (t <= k[0].t) return k[0].v;
+    if (t >= k[n - 1].t) return k[n - 1].v;
+    let lo = 0, hi = n - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (k[m].t <= t) lo = m; else hi = m; }
+    const a = k[lo], b = k[hi];
+    if (b.e === 'step') return a.v;
+    const d = b.t - a.t; if (d <= 0) return b.v;
+    return lerp(a.v, b.v, EASE[b.e]((t - a.t) / d));
+  }
+}
+
+/* =========================================================================
+   Storyboard / tijdlijn
+   ========================================================================= */
+const PROF_N = { go: [0, .25], ci: [.18, .5], pk: [.55, 1.05], cu: [1.1, 1.95], ga: [1.5, 2.05], se: 1.45, fe: 1.2, dv: .65 };
+const PROF_S = { go: [0, .7], ci: [1.0, 1.6], pk: [2.1, 2.9], cu: [3.4, 4.8], ga: [4.5, 5.3], se: 4.4, fe: 3.2, dv: .65 };
+
+function build(withInserts) {
+  const CONT = ['clutch', 'gas', 'speed', 'free', 'floor', 'shake', 'limit', 'dash', 'ign', 'focus', 'fade', 'followAdj'];
+  const T = {};
+  for (const n of CONT) T[n] = new Track(n === 'floor' ? 1150 : 0);
+  T.insert = new Track(0);
+  T.slow = new Track(1);
+  const E = { gears: [], caps: [], seqs: [], chapters: [], warns: [], honks: [], rewinds: [], puffs: [] };
+
+  const K = (n, t, v, e = 'smooth') => T[n].add(t, v, e);
+  const V = (n, t) => T[n].at(t);
+  const A = (n, t) => T[n].add(t, T[n].at(t), 'linear');                  // anker (vasthouden)
+  const J = (n, t, v) => { T[n].add(t, V(n, t), 'linear'); T[n].add(t + .001, v, 'step'); }; // sprong
+  let gear = 0;
+  const shiftEv = (t0, dur, to) => { E.gears.push({ t0, dur, from: gear, to }); gear = to; };
+  const cap = (t, dur, title, sub, kind = 'action', ch = 'main') => E.caps.push({ t, dur, title, sub, kind, ch });
+  const tip = (t, dur, html) => E.caps.push({ t, dur, title: html, kind: 'tip', ch: 'tip' });
+  const warn = (t, dur, title, sub) => { cap(t, dur, title, sub, 'warn'); E.warns.push({ t, dur }); };
+  const chapter = (t, label, kind = 'main') => E.chapters.push({ t, label, kind });
+  const wr = (v, g) => g > 0 ? v * 1000 / RATIO[g] : 0;
+
+  /* --- schakel-choreografie: gas los, koppeling in, pook, koppeling op, gas --- */
+  const shift = (t0, from, to, gN, P, slow = false) => {
+    const v = V('speed', t0);
+    const vE = v - P.dv, rO = wr(v, from), rN = wr(vE, to);
+    A('gas', t0 + P.go[0]); K('gas', t0 + P.go[1], 0, 'out');
+    A('clutch', t0 + P.ci[0]); K('clutch', t0 + P.ci[1], 1);
+    A('clutch', t0 + P.cu[0]); K('clutch', t0 + lerp(P.cu[0], P.cu[1], .25), .62); K('clutch', t0 + P.cu[1], 0);
+    K('free', t0, rO, 'linear'); K('free', t0 + P.fe, rN + 30);
+    shiftEv(t0 + P.pk[0], P.pk[1] - P.pk[0], to);
+    A('speed', t0); K('speed', t0 + P.se, vE);
+    A('gas', t0 + P.ga[0]); K('gas', t0 + P.ga[1], gN);
+    E.seqs.push({ t0, P, from, to });
+    if (slow) {
+      K('slow', t0 - .4, 1, 'linear'); K('slow', t0, .35); K('slow', t0 + P.ga[1], .35, 'linear'); K('slow', t0 + P.ga[1] + .6, 1);
+      cap(t0, 1.0, '① Gas los', 'Rechtervoet van het gaspedaal — toerental zakt', 'action');
+      cap(t0 + 1.0, 1.1, '② Koppeling in', 'Linkervoet trapt de koppeling volledig in', 'action');
+      cap(t0 + 2.1, 1.3, `③ Pook van ${from} naar ${to}`, 'Rustig via neutraal — niet forceren', 'action');
+      cap(t0 + 3.4, 1.2, '④ Koppeling soepel op', 'Toerental zakt mooi mee — geen schok', 'action');
+      cap(t0 + 4.6, 1.5, '⑤ Weer gas geven', `Doorrijden in de ${to}e versnelling`, 'success');
+      tip(t0 + .2, 5.4, '<b>Slow-motion:</b> de schakelchoreografie stap voor stap. Daarna gaat het in één vloeiende beweging.');
+    } else {
+      cap(t0, 2.3, `Opschakelen naar ${to}`, 'Gas los · koppeling in · pook · koppeling op · gas', 'action');
+    }
+    return t0 + P.se;
+  };
+
+  /* --- "Wat als…?" fout-insert met terugspoelen --- */
+  const insert = (tS, n, label, body) => {
+    if (!withInserts) return tS;
+    chapter(tS, 'Fout ' + n + ': ' + label, 'warn');
+    const snap = {}; for (const c of CONT) snap[c] = V(c, tS); const g0 = gear;
+    K('fade', tS, 0, 'linear'); K('fade', tS + .45, 1);
+    const s = tS + .45;
+    J('insert', s, n);
+    K('fade', s + .05, 1, 'linear'); K('fade', s + .5, 0);
+    const d = body(s);
+    const e = s + d;
+    K('fade', e, 0, 'linear'); K('fade', e + .45, 1);
+    const r = e + .45;
+    for (const c of CONT) if (c !== 'fade') J(c, r, snap[c]);
+    if (gear !== g0) shiftEv(r, 0, g0);
+    J('insert', r, 0);
+    E.rewinds.push({ t: e + .2, t1: r + .55 });
+    K('fade', r + .05, 1, 'linear'); K('fade', r + .6, 0);
+    return r + .6;
+  };
+
+  /* ---------------- 0. Intro ---------------- */
+  chapter(0, 'Intro');
+  cap(.4, 3.0, 'Soepel wegrijden &amp; opschakelen', 'Van stilstand naar 80 km/u — zonder het verkeer te hinderen', 'title', 'big');
+
+  /* ---------------- 1. Motor starten ---------------- */
+  chapter(3.6, 'Motor starten');
+  cap(3.7, 1.5, 'Pook in neutraal', 'Controleer: de pook beweegt vrij heen en weer', 'info');
+  K('ign', 5.0, 0, 'linear'); K('ign', 5.15, 1); K('ign', 6.3, 1, 'linear'); K('ign', 6.9, 0);
+  K('dash', 5.0, 0, 'linear'); K('dash', 5.5, 1);
+  cap(5.2, 1.0, 'Contact aan — starten', 'Sleutel omdraaien of startknop indrukken', 'action');
+  K('free', 5.2, 0, 'linear'); K('free', 5.35, 240, 'out'); K('free', 5.95, 260, 'linear'); K('free', 6.3, 1350, 'out'); K('free', 7.9, 800);
+  K('shake', 5.2, 0, 'linear'); K('shake', 5.3, .22); K('shake', 5.95, .22, 'linear'); K('shake', 6.3, .06); K('shake', 7.0, 0);
+  E.puffs.push({ t: 6.05 });
+  cap(6.2, 2.2, 'Motor gestart', 'De naald zakt soepel naar stationair: ± 800 tpm', 'success');
+
+  /* ---------------- 2. Wegrijden ---------------- */
+  chapter(8.6, 'Wegrijden');
+  K('focus', 8.6, 0, 'linear'); K('focus', 9.3, 1);
+  tip(8.7, 3.2, '<b>Inzoomen:</b> let op de voeten en de pook.');
+  K('clutch', 9.2, 0, 'linear'); K('clutch', 10.0, 1);
+  cap(9.2, 1.4, 'Koppeling 100% in', 'Linkervoet trapt de koppeling helemaal in', 'action');
+  shiftEv(10.6, .65, 1);
+  cap(10.6, 1.3, 'Pook naar de 1', 'Via neutraal naar links en naar voren', 'action');
+  K('gas', 11.9, 0, 'linear'); K('gas', 12.6, .2);
+  K('free', 11.9, 800, 'linear'); K('free', 12.8, 1500);
+  cap(11.9, 1.3, 'Licht gas geven', 'Rechtervoet: toerental naar ± 1500 tpm', 'action');
+  K('clutch', 13.2, 1, 'linear'); K('clutch', 14.3, .62);
+  cap(13.2, 1.3, 'Koppeling langzaam op', 'Laat het pedaal rustig omhoog komen…', 'action');
+  K('clutch', 15.7, .52);
+  cap(14.5, 2.0, 'Aangrijpingspunt!', 'De auto wil rijden — koppeling hier even vasthouden', 'bite');
+  K('speed', 14.8, 0, 'linear'); K('speed', 15.7, 1.2, 'in'); K('speed', 16.6, 4, 'linear');
+  K('speed', 17.5, 7.5, 'linear'); K('speed', 18.4, 10.8, 'linear'); K('speed', 19.3, 13.5, 'out');
+  K('clutch', 16.7, .3); K('clutch', 17.7, .1); K('clutch', 18.5, 0);
+  K('gas', 15.7, .2, 'linear'); K('gas', 17.4, .32);
+  K('free', 15.7, 1500, 'linear'); K('free', 16.6, 1600);
+  cap(16.6, 1.8, 'Koppeling verder op + iets meer gas', 'De auto komt soepel in beweging', 'action');
+  cap(18.5, 1.9, 'Koppeling los — je rijdt!', 'Linkervoet naast het pedaal laten rusten', 'success');
+  K('focus', 19.6, 1, 'linear'); K('focus', 20.3, 0);
+  let t = 20.6;
+
+  /* ---- Fout 1: koppeling te snel op ---- */
+  t = insert(t, 1, 'te snel op', s => {
+    J('speed', s, 0); J('clutch', s, 1); J('gas', s, .2); J('free', s, 1500);
+    cap(s + .5, 2.3, 'Wat als… de koppeling te snel opkomt?', 'Zelfde start — maar nu schiet de linkervoet van het pedaal', 'warnq');
+    const a = s + 2.0;
+    A('clutch', a); K('clutch', a + .22, 0, 'out');
+    J('floor', a + .1, 0);
+    A('speed', a + .15); K('speed', a + .32, 2.6, 'out'); K('speed', a + .52, .9); K('speed', a + .72, 2.3);
+    K('speed', a + .92, .7); K('speed', a + 1.15, 1.4); K('speed', a + 1.5, 0);
+    A('shake', a + .12); K('shake', a + .3, 1); K('shake', a + 1.45, 1, 'linear'); K('shake', a + 1.9, 0);
+    A('free', a + 1.4); K('free', a + 1.5, 0, 'linear');
+    A('gas', a + 1.5); K('gas', a + 1.9, 0);
+    warn(a + .35, 3.0, 'Auto stottert en slaat af!', 'De koppeling kwam te snel omhoog');
+    tip(a + 2.4, 3.6, '<b>Tip:</b> laat de koppeling rustig opkomen en houd hem even vast op het <b>aangrijpingspunt</b>.');
+    return 8.2;
+  });
+
+  /* ---------------- Optrekken in de 1 ---------------- */
+  chapter(t, 'Optrekken in de 1');
+  A('speed', t); A('gas', t);
+  K('gas', t + .8, .48);
+  K('speed', t + 3.8, 20, 'acc');
+  cap(t, 2.4, '1e versnelling: 0 – 20 km/u', 'Alleen voor het wegrijden vanuit stilstand', 'info');
+  cap(t + 2.6, 1.4, 'Schakelmoment!', '± 20 km/u · toerental tussen 2000 en 2500 tpm', 'zone');
+  t += 3.8;
+
+  /* ---- Fout 2: te laat opschakelen ---- */
+  t = insert(t, 2, 'te laat schakelen', s => {
+    cap(s + .4, 2.2, 'Wat als… je te laat opschakelt?', 'Je blijft gas geven in de 1', 'warnq');
+    A('gas', s + .6); K('gas', s + 1.1, .95);
+    A('speed', s + .6); K('speed', s + 4.0, 52.5, 'acc');
+    A('limit', s + 3.7); K('limit', s + 4.0, 1); K('limit', s + 5.8, 1, 'linear'); K('limit', s + 6.1, 0);
+    A('shake', s + 3.5); K('shake', s + 3.9, .25); K('shake', s + 5.8, .25, 'linear'); K('shake', s + 6.1, 0);
+    K('gas', s + 5.8, .95, 'linear'); K('gas', s + 6.2, .35);
+    warn(s + 3.0, 3.2, 'Toerental in het rood!', 'Motor maakt herrie, slijt sneller en verbruikt veel brandstof');
+    tip(s + 5.2, 2.6, '<b>Tip:</b> schakel op bij <b>± 20 · 40 · 60 · 80 km/u</b> (tussen <b>2000 – 2500 tpm</b>). Hoger levert niets op.');
+    return 7.9;
+  });
+
+  /* ---------------- 1 → 2 (slow-motion) ---------------- */
+  chapter(t, 'Schakelen 1 → 2');
+  let a0 = shift(t, 1, 2, .5, PROF_S, true);
+  K('speed', a0 + 4.2, 40, 'acc');
+  cap(a0 + 1.6, 2.4, '2e versnelling: 20 – 40 km/u', 'Langzaam rijden, in de file of bij scherpe bochten', 'info');
+  t = a0 + 4.2;
+
+  /* ---- Fout 3: koppeling te lang ingetrapt ---- */
+  t = insert(t, 3, 'koppeling te lang in', s => {
+    cap(s + .4, 2.2, 'Wat als… je de koppeling te lang ingetrapt houdt?', 'Gas los, koppeling in… en dan blijven wachten', 'warnq');
+    A('gas', s + .7); K('gas', s + .95, 0, 'out');
+    A('clutch', s + .9); K('clutch', s + 1.2, 1);
+    shiftEv(s + 1.5, .5, 3);
+    K('free', s + .7, wr(V('speed', s), 2), 'linear'); K('free', s + 2.6, 800);
+    A('speed', s + .9); K('speed', s + 5.6, 29, 'out');
+    A('followAdj', s + 1.6); K('followAdj', s + 4.8, -24);
+    E.honks.push({ t: s + 3.9, dur: 1.5 });
+    warn(s + 2.7, 3.1, 'Snelheidsverlies!', 'Het verkeer achter je moet remmen');
+    tip(s + 5.3, 2.8, '<b>Tip:</b> schakelen duurt ± 1 seconde — laat de koppeling daarna direct weer soepel opkomen.');
+    return 8.2;
+  });
+
+  /* ---------------- 2 → 3 ---------------- */
+  chapter(t, 'Schakelen 2 → 3');
+  a0 = shift(t, 2, 3, .5, PROF_N);
+  K('speed', a0 + 4.6, 60, 'acc');
+  cap(a0 + 1.0, 2.6, '3e versnelling: 40 – 60 km/u', 'Stadsverkeer en rustigere wegen', 'info');
+  tip(a0 + .6, 3.4, '<b>Ritme:</b> elke schakelbeurt is één vloeiende beweging van ± 1 seconde.');
+  t = a0 + 4.6;
+
+  /* ---------------- 3 → 4 ---------------- */
+  chapter(t, 'Schakelen 3 → 4');
+  a0 = shift(t, 3, 4, .48, PROF_N);
+  K('speed', a0 + 4.4, 80, 'acc');
+  cap(a0 + 1.0, 2.6, '4e versnelling: 60 – 80 km/u', 'Buitenwegen en doorgaande wegen', 'info');
+  tip(a0 + .6, 3.4, '<b>Spiegel:</b> het verkeer achter je rijdt ontspannen mee — niemand hoeft te remmen.');
+  t = a0 + 4.4;
+
+  /* ---------------- 4 → 5 ---------------- */
+  chapter(t, 'Schakelen 4 → 5');
+  const t5 = t;
+  a0 = shift(t, 4, 5, .42, PROF_N);
+  K('speed', a0 + 4.0, 80, 'smooth');
+  A('gas', a0 + 2.4); K('gas', a0 + 4.2, .24);
+  cap(a0 + .9, 2.5, '5e versnelling: 80 – 100 km/u', 'Autowegen en snelwegen', 'info');
+  tip(a0 + .8, 4.6, '<b>6e versnelling?</b> Heeft je auto er een, dan gebruik je die vanaf ± 100 km/u op de snelweg.');
+  chapter(a0 + 3.6, '80 km/u – Finale');
+  cap(a0 + 3.6, 2.8, '80 km/u bereikt!', '5e versnelling · ± 1950 tpm — rustig en zuinig', 'success');
+  const tFinal = a0 + 6.6;
+  const total = tFinal + 8;
+
+  E.gears.sort((a, b) => a.t0 - b.t0);
+  E.caps.sort((a, b) => a.t - b.t);
+  E.chapters.sort((a, b) => a.t - b.t);
+  return { T, E, CONT, total, tFinal, t5 };
+}
+
+/* =========================================================================
+   Voorberekening: afgelegde afstand + "wereldtijd" (slow-motion)
+   ========================================================================= */
+const DT = 1 / 60;
+let TL, DIST, WT, CH = {};
+const sampleArr = (A, t) => { const f = clamp(t / DT, 0, A.length - 1.001); const i = Math.floor(f); return lerp(A[i], A[i + 1], f - i); };
+
+const LEFTCARS = [];
+for (let k = 0; k < 16; k++) {
+  const cols = ['#e9ecf3', '#d64545', '#3a7bd5', '#30323d', '#5bbf8a', '#9b6bd6', '#f08a3c'];
+  LEFTCARS.push({ z0: -30 - k * 170 - hash(k * 9.1) * 60, v: 88 + hash(k * 3.3) * 14, col: cols[k % cols.length] });
+}
+
+function prepare(withInserts) {
+  TL = build(withInserts);
+  const n = Math.ceil(TL.total / DT) + 3;
+  DIST = new Float64Array(n); WT = new Float64Array(n);
+  for (let i = 1; i < n; i++) {
+    const tt = (i - 1) * DT, sl = TL.T.slow.at(tt);
+    DIST[i] = DIST[i - 1] + TL.T.speed.at(tt) / 3.6 * DT * sl;
+    WT[i] = WT[i - 1] + DT * sl;
+  }
+  TL.z80 = sampleArr(DIST, TL.t5) + 160;
+  CH = { main: [], tip: [], big: [] };
+  for (const c of TL.E.caps) CH[c.ch].push(c);
+  // tijdlijn-markeringen
+  const ticks = document.getElementById('ticks'); ticks.innerHTML = '';
+  for (const c of TL.E.chapters) {
+    const sp = document.createElement('span');
+    sp.style.left = (c.t / TL.total * 100) + '%';
+    if (c.kind === 'warn') sp.className = 'w';
+    ticks.appendChild(sp);
+  }
+  scrub.max = TL.total;
+}
+
+/* =========================================================================
+   Afgeleide toestand op tijdstip t
+   ========================================================================= */
+const GP = { 0: [0, 0], 1: [-1, -1], 2: [-1, 1], 3: [0, -1], 4: [0, 1], 5: [1, -1] };
+function pathPos(a, b, u) {
+  const pts = [GP[a], [GP[a][0], 0], [GP[b][0], 0], GP[b]];
+  const segs = []; let tot = 0;
+  for (let i = 0; i < 3; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); segs.push(l); tot += l; }
+  if (tot === 0) return GP[b];
+  let d = u * tot;
+  for (let i = 0; i < 3; i++) {
+    if (d <= segs[i] || i === 2) { const f = segs[i] ? clamp(d / segs[i]) : 1; return [lerp(pts[i][0], pts[i + 1][0], f), lerp(pts[i][1], pts[i + 1][1], f)]; }
+    d -= segs[i];
+  }
+  return GP[b];
+}
+function gearState(t) {
+  let ev = null;
+  for (const g of TL.E.gears) { if (g.t0 <= t) ev = g; else break; }
+  if (!ev) return { gear: 0, pos: GP[0], moving: 0, target: null, from: 0 };
+  if (ev.dur > 0 && t < ev.t0 + ev.dur) {
+    const u = EASE.smooth((t - ev.t0) / ev.dur);
+    return { gear: 0, pos: pathPos(ev.from, ev.to, u), moving: 1, target: ev.to, from: ev.from };
+  }
+  return { gear: ev.to, pos: GP[ev.to], moving: 0, target: null, from: ev.from };
+}
+const engage = p => p >= .62 ? 0 : p <= .16 ? 1 : EASE.smooth((.62 - p) / .46);
+
+function stateAt(t) {
+  const T = TL.T, s = { t };
+  for (const n of TL.CONT) s[n] = T[n].at(t);
+  s.insert = Math.round(T.insert.at(t));
+  s.slow = T.slow.at(t);
+  const g = gearState(t);
+  s.gear = g.gear; s.knob = g.pos; s.moving = g.moving; s.gTarget = g.target; s.gFrom = g.from;
+  const e = engage(s.clutch); s.engage = e;
+  const ec = s.gear > 0 ? e : 0;
+  const wheel = s.gear > 0 ? s.speed * 1000 / RATIO[s.gear] : 0;
+  let rpm = lerp(s.free, Math.max(wheel, s.floor), ec);
+  rpm += s.shake * (Math.sin(t * 37) * .6 + Math.sin(t * 71 + 1) * .4) * 240;
+  rpm -= s.limit * (.5 + .5 * Math.sin(t * 26)) * 480;
+  s.rpm = Math.max(0, rpm);
+  s.clutchV = (s.clutch - T.clutch.at(t - .08)) / .08;
+  s.gasV = (s.gas - T.gas.at(t - .08)) / .08;
+  s.dist = sampleArr(DIST, t);
+  s.wt = sampleArr(WT, t);
+  s.running = s.rpm > 300 && s.dash > .5;
+  return s;
+}
+
+/* =========================================================================
+   Canvas
+   ========================================================================= */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let SC = 1, DPR = 1;
+
+function rr(x, y, w, h, r) {
+  w = Math.max(w, .1); h = Math.max(h, .1); r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, Math.max(r, .1), 0, Math.PI * 2); }
+function ellipse(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, Math.max(rx, .1), Math.max(ry, .1), 0, 0, Math.PI * 2); }
+
+/* ---------- wereld ---------- */
+const kappa = z => 3e-4 * Math.sin(z * .004) + 1.8e-4 * Math.sin(z * .0091 + 1.3);
+const heading = z => -3e-4 / .004 * Math.cos(z * .004) - 1.8e-4 / .0091 * Math.cos(z * .0091 + 1.3);
+
+function cloud(x, y, k) {
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ellipse(x, y, 60 * k, 20 * k); ctx.fill();
+  circle(x - 22 * k, y - 10 * k, 24 * k); ctx.fill();
+  circle(x + 14 * k, y - 16 * k, 30 * k); ctx.fill();
+  circle(x + 42 * k, y - 4 * k, 18 * k); ctx.fill();
+}
+
+function drawBackground(st, t) {
+  const bo = heading(st.dist) * 900;
+  let g = ctx.createLinearGradient(0, 0, 0, HOR);
+  g.addColorStop(0, '#3b97e6'); g.addColorStop(1, '#c4e8fc');
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, HOR + 22);
+  // zon
+  const sx = 1230 + bo * .25, sy = 110;
+  g = ctx.createRadialGradient(sx, sy, 10, sx, sy, 140);
+  g.addColorStop(0, 'rgba(255,248,210,.95)'); g.addColorStop(.25, 'rgba(255,240,180,.55)'); g.addColorStop(1, 'rgba(255,240,180,0)');
+  ctx.fillStyle = g; ctx.fillRect(sx - 150, sy - 150, 300, 300);
+  circle(sx, sy, 34); ctx.fillStyle = '#fff6cf'; ctx.fill();
+  // wolken
+  for (let i = 0; i < 7; i++) {
+    const base = i * 290 + (i % 2) * 80;
+    const x = ((base + st.wt * 5 * (1 + (i % 3) * .3) - bo * .6) % 1950 + 1950) % 1950 - 170;
+    cloud(x, 54 + (i * 37 % 100), .6 + (i % 3) * .25);
+  }
+  // bergen
+  ctx.fillStyle = '#88aad6';
+  ctx.beginPath(); ctx.moveTo(-20, HOR + 2);
+  for (let x = -20; x <= W + 20; x += 16) {
+    const X = x + bo * .35;
+    ctx.lineTo(x, HOR - 64 - 40 * Math.sin(X * .0052) - 22 * Math.sin(X * .013 + 1.7) - 9 * Math.sin(X * .031));
+  }
+  ctx.lineTo(W + 20, HOR + 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#a7c1e2';
+  ctx.beginPath(); ctx.moveTo(-20, HOR + 2);
+  for (let x = -20; x <= W + 20; x += 16) {
+    const X = x + bo * .5 + 400;
+    ctx.lineTo(x, HOR - 34 - 22 * Math.sin(X * .0071 + .4) - 10 * Math.sin(X * .019));
+  }
+  ctx.lineTo(W + 20, HOR + 2); ctx.closePath(); ctx.fill();
+  // heuvels
+  ctx.fillStyle = '#58a663';
+  ctx.beginPath(); ctx.moveTo(-20, HOR + 2);
+  for (let x = -20; x <= W + 20; x += 16) {
+    const X = x + bo * .75;
+    ctx.lineTo(x, HOR - 16 - 12 * Math.sin(X * .011 + 2) - 6 * Math.sin(X * .027));
+  }
+  ctx.lineTo(W + 20, HOR + 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#62bb68'; ctx.fillRect(-20, HOR, W + 40, H - HOR + 20);
+}
+
+function quad(c1, c2, s1, s2, y1, y2, xa, xb, col) {
+  ctx.fillStyle = col; ctx.beginPath();
+  ctx.moveTo(c1 + xa * s1, y1); ctx.lineTo(c1 + xb * s1, y1);
+  ctx.lineTo(c2 + xb * s2, y2); ctx.lineTo(c2 + xa * s2, y2);
+  ctx.closePath(); ctx.fill();
+}
+
+function drawTree(x, y, s, k, pine) {
+  const sz = .8 + k * .55;
+  ctx.fillStyle = '#6b4a2f';
+  ctx.fillRect(x - .22 * s * sz, y - 2.2 * s * sz, .44 * s * sz, 2.2 * s * sz);
+  if (pine) {
+    for (let i = 0; i < 3; i++) {
+      const yy = y - (2.0 + i * 1.5) * s * sz, w = (2.2 - i * .55) * s * sz;
+      ctx.fillStyle = i % 2 ? '#2f7d4b' : '#276b40';
+      ctx.beginPath(); ctx.moveTo(x - w, yy); ctx.lineTo(x + w, yy); ctx.lineTo(x, yy - 2.4 * s * sz); ctx.closePath(); ctx.fill();
+    }
+  } else {
+    ctx.fillStyle = '#2f8a46'; circle(x, y - 3.4 * s * sz, 2.0 * s * sz); ctx.fill();
+    ctx.fillStyle = '#3ea457'; circle(x - .7 * s * sz, y - 3.9 * s * sz, 1.4 * s * sz); ctx.fill();
+    ctx.fillStyle = '#4fb866'; circle(x - 1.0 * s * sz, y - 4.3 * s * sz, .7 * s * sz); ctx.fill();
+  }
+}
+function drawBush(x, y, s, k) {
+  const sz = .7 + k * .5;
+  ctx.fillStyle = '#3b9a50'; ellipse(x, y - .5 * s * sz, 1.1 * s * sz, .6 * s * sz); ctx.fill();
+  ctx.fillStyle = '#4cb262'; ellipse(x - .3 * s * sz, y - .7 * s * sz, .6 * s * sz, .4 * s * sz); ctx.fill();
+}
+function drawPost(x, y, s) {
+  ctx.fillStyle = '#f4f4f4'; ctx.fillRect(x - .07 * s, y - 1.0 * s, .14 * s, 1.0 * s);
+  ctx.fillStyle = '#1b1b1b'; ctx.fillRect(x - .07 * s, y - 1.0 * s, .14 * s, .25 * s);
+  ctx.fillStyle = '#ff9a2e'; ctx.fillRect(x - .04 * s, y - .9 * s, .08 * s, .1 * s);
+}
+function drawSign80(x, y, s) {
+  ctx.fillStyle = '#9aa3b2'; ctx.fillRect(x - .05 * s, y - 2.4 * s, .1 * s, 2.4 * s);
+  circle(x, y - 2.6 * s, .5 * s); ctx.fillStyle = '#e02929'; ctx.fill();
+  circle(x, y - 2.6 * s, .39 * s); ctx.fillStyle = '#fff'; ctx.fill();
+  if (s > 6) {
+    ctx.fillStyle = '#111'; ctx.font = `800 ${Math.round(.42 * s)}px ${FONT}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('80', x, y - 2.58 * s);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+
+function drawCarRear(cx, by, s, col, me, st, t) {
+  const w = 1.8 * s, h = 1.45 * s;
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ellipse(cx, by, w * .6, .14 * s); ctx.fill();
+  ctx.fillStyle = '#16181f';
+  rr(cx - w * .47, by - .4 * s, .34 * s, .4 * s, .07 * s); ctx.fill();
+  rr(cx + w * .47 - .34 * s, by - .4 * s, .34 * s, .4 * s, .07 * s); ctx.fill();
+  // carrosserie
+  const g = ctx.createLinearGradient(0, by - h, 0, by);
+  g.addColorStop(0, col); g.addColorStop(1, shade(col, -.35));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(cx - w * .5, by - .3 * s);
+  ctx.lineTo(cx - w * .5, by - .9 * s);
+  ctx.quadraticCurveTo(cx - w * .49, by - 1.0 * s, cx - w * .43, by - 1.02 * s);
+  ctx.lineTo(cx - w * .36, by - h);
+  ctx.lineTo(cx + w * .36, by - h);
+  ctx.lineTo(cx + w * .43, by - 1.02 * s);
+  ctx.quadraticCurveTo(cx + w * .49, by - 1.0 * s, cx + w * .5, by - .9 * s);
+  ctx.lineTo(cx + w * .5, by - .3 * s);
+  ctx.closePath(); ctx.fill();
+  // achterruit
+  const gw = ctx.createLinearGradient(0, by - h, 0, by - 1.0 * s);
+  gw.addColorStop(0, '#2b3446'); gw.addColorStop(1, '#151b27');
+  ctx.fillStyle = gw;
+  ctx.beginPath();
+  ctx.moveTo(cx - w * .4, by - 1.04 * s); ctx.lineTo(cx - w * .33, by - h + .07 * s);
+  ctx.lineTo(cx + w * .33, by - h + .07 * s); ctx.lineTo(cx + w * .4, by - 1.04 * s); ctx.closePath(); ctx.fill();
+  if (s > 30) { ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = .04 * s; ctx.beginPath(); ctx.moveTo(cx - w * .2, by - 1.1 * s); ctx.lineTo(cx - w * .05, by - h + .1 * s); ctx.stroke(); }
+  // achterlichten
+  const tl = me && st && st.gas < .02 && st.speed > 1 ? '#ff5a5a' : '#d8262f';
+  ctx.fillStyle = tl;
+  rr(cx - w * .48, by - .86 * s, .38 * s, .17 * s, .05 * s); ctx.fill();
+  rr(cx + w * .48 - .38 * s, by - .86 * s, .38 * s, .17 * s, .05 * s); ctx.fill();
+  // bumper
+  ctx.fillStyle = shade(col, -.5);
+  rr(cx - w * .49, by - .38 * s, w * .98, .16 * s, .06 * s); ctx.fill();
+  // kenteken (NL geel)
+  ctx.fillStyle = '#ffcf2e'; rr(cx - .27 * s, by - .64 * s, .54 * s, .13 * s, .02 * s); ctx.fill();
+  if (s > 40) {
+    ctx.fillStyle = '#1f3fbf'; ctx.fillRect(cx - .27 * s, by - .64 * s, .05 * s, .13 * s);
+    ctx.fillStyle = '#111'; ctx.font = `800 ${Math.round(.1 * s)}px ${FONT}`; ctx.textAlign = 'center';
+    ctx.fillText(me ? 'RL-80-S' : 'XX-12-Y', cx + .02 * s, by - .545 * s);
+  }
+  if (me) {
+    // uitlaat
+    ctx.fillStyle = '#5c616d'; ellipse(cx - w * .32, by - .27 * s, .07 * s, .045 * s); ctx.fill();
+    // L-bord (lesauto)
+    ctx.fillStyle = '#e8edf7'; ctx.fillRect(cx - .02 * s, by - h - .1 * s, .04 * s, .1 * s);
+    ctx.fillStyle = '#1f4fbf'; rr(cx - .24 * s, by - h - .42 * s, .48 * s, .33 * s, .04 * s); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(.27 * s)}px ${FONT}`; ctx.textAlign = 'center';
+    ctx.fillText('L', cx, by - h - .16 * s);
+  }
+}
+function drawCarFront(cx, by, s, col, flash) {
+  const w = 1.8 * s, h = 1.45 * s;
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ellipse(cx, by, w * .6, .12 * s); ctx.fill();
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(cx - w * .5, by - .25 * s); ctx.lineTo(cx - w * .5, by - .9 * s); ctx.lineTo(cx - w * .37, by - h);
+  ctx.lineTo(cx + w * .37, by - h); ctx.lineTo(cx + w * .5, by - .9 * s); ctx.lineTo(cx + w * .5, by - .25 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#1b2230';
+  ctx.beginPath(); ctx.moveTo(cx - w * .41, by - .98 * s); ctx.lineTo(cx - w * .33, by - h + .06 * s);
+  ctx.lineTo(cx + w * .33, by - h + .06 * s); ctx.lineTo(cx + w * .41, by - .98 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#20242c'; rr(cx - w * .22, by - .62 * s, w * .44, .16 * s, .04 * s); ctx.fill();
+  const hl = flash ? '#fffbe0' : '#e9eef7';
+  if (flash) { ctx.save(); ctx.shadowColor = '#fff6b0'; ctx.shadowBlur = 30; }
+  ctx.fillStyle = hl;
+  rr(cx - w * .47, by - .78 * s, .4 * s, .15 * s, .05 * s); ctx.fill();
+  rr(cx + w * .47 - .4 * s, by - .78 * s, .4 * s, .15 * s, .05 * s); ctx.fill();
+  if (flash) ctx.restore();
+}
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  if (f < 0) { r *= 1 + f; g *= 1 + f; b *= 1 + f; } else { r += (255 - r) * f; g += (255 - g) * f; b += (255 - b) * f; }
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+
+const leadGap = st => 9 + st.speed / 3.6 * 1.9;
+const followGap = st => Math.max(3.4, 9 + st.speed / 3.6 * 1.6 + st.followAdj);
+
+function drawWorld(st, t) {
+  drawBackground(st, t);
+  const d = st.dist, camZ = d - CAMB;
+  const n0 = Math.ceil((camZ + .8) / SEG);
+  const zr = [], sy = [], L = [], ids = [];
+  let slope = 0, lat = 0;
+  for (let j = 0; j <= NSEG; j++) {
+    const nn = n0 + j, zw = nn * SEG, z = zw - camZ;
+    if (j > 0) { slope += kappa(zw) * SEG; lat += slope * SEG; }
+    zr.push(z); sy.push(HOR + CAMH * F / z); L.push(lat); ids.push(nn);
+  }
+  for (let j = NSEG - 1; j >= 0; j--) {
+    const y1 = sy[j], y2 = sy[j + 1];
+    if (y2 > H + 40) continue;
+    const s1 = F / zr[j], s2 = F / zr[j + 1];
+    const c1 = 800 + (L[j] - CAMX) * s1, c2 = 800 + (L[j + 1] - CAMX) * s2;
+    const nn = ids[j], alt = (Math.floor(nn / 2) & 1) === 0;
+    ctx.fillStyle = alt ? '#67c16c' : '#5cb562'; ctx.fillRect(-20, y2, W + 40, y1 - y2 + 1);
+    quad(c1, c2, s1, s2, y1, y2, -RW - .55, RW + .55, alt ? '#e24646' : '#f3f3f3');
+    quad(c1, c2, s1, s2, y1, y2, -RW, RW, alt ? '#4b5160' : '#474d5b');
+    quad(c1, c2, s1, s2, y1, y2, -RW + .12, -RW + .27, '#f2f2f2');
+    quad(c1, c2, s1, s2, y1, y2, RW - .27, RW - .12, '#f2f2f2');
+    if (nn % 3 === 0) quad(c1, c2, s1, s2, y1, y2, -.08, .08, '#f7f7f7');
+  }
+  // nevel bij horizon
+  const g = ctx.createLinearGradient(0, HOR - 26, 0, HOR + 36);
+  g.addColorStop(0, 'rgba(210,236,252,0)'); g.addColorStop(.42, 'rgba(210,236,252,.6)'); g.addColorStop(1, 'rgba(210,236,252,0)');
+  ctx.fillStyle = g; ctx.fillRect(-20, HOR - 26, W + 40, 62);
+
+  const latAt = z => {
+    for (let j = 0; j < NSEG; j++) if (zr[j + 1] >= z) { const f = clamp((z - zr[j]) / (zr[j + 1] - zr[j])); return lerp(L[j], L[j + 1], f); }
+    return L[NSEG];
+  };
+  // objecten
+  const objs = [];
+  for (let j = 0; j < NSEG; j++) {
+    const nn = ids[j], z = zr[j]; if (z < 1.6) continue;
+    for (const side of [-1, 1]) {
+      const h = hash(nn * 2 + (side > 0 ? 1 : 0));
+      if (h < .3) { if (z > 9) objs.push({ z, x: side * (RW + 3.5 + hash(nn * 7 + side) * 14), L: L[j], type: h < .11 ? 'pine' : 'tree', k: hash(nn * 13 + side) }); }
+      else if (h < .42) objs.push({ z, x: side * (RW + 1.7 + hash(nn * 5 + side) * 3), L: L[j], type: 'bush', k: hash(nn * 3 + side) });
+    }
+    if (nn % 10 === 0) { objs.push({ z, x: -(RW + .9), L: L[j], type: 'post' }); objs.push({ z, x: RW + .9, L: L[j], type: 'post' }); }
+  }
+  const z80 = TL.z80 - camZ;
+  if (z80 > 1.6 && z80 < NSEG * SEG) objs.push({ z: z80, x: RW + 1.8, L: latAt(z80), type: 'sign' });
+  // verkeer
+  const lz = CAMB + 4.3 + leadGap(st);
+  objs.push({ z: lz, x: CAMX, L: latAt(lz), type: 'car', col: '#f2c14e' });
+  for (const c of LEFTCARS) {
+    const rel = c.z0 + c.v / 3.6 * st.wt - d;
+    const z = CAMB + rel;
+    if (z > 2.5 && z < NSEG * SEG) objs.push({ z, x: -1.75, L: latAt(z), type: 'car', col: c.col });
+  }
+  objs.push({ z: CAMB, x: CAMX, L: 0, type: 'me' });
+  objs.sort((a, b) => b.z - a.z);
+  for (const o of objs) {
+    const s = F / o.z, x = 800 + (o.x + o.L - CAMX) * s, y = HOR + CAMH * s;
+    if (x < -300 || x > W + 300) continue;
+    switch (o.type) {
+      case 'tree': drawTree(x, y, s, o.k, false); break;
+      case 'pine': drawTree(x, y, s, o.k, true); break;
+      case 'bush': drawBush(x, y, s, o.k); break;
+      case 'post': drawPost(x, y, s); break;
+      case 'sign': drawSign80(x, y, s); break;
+      case 'car': drawCarRear(x, y, s, o.col, false); break;
+      case 'me': drawMe(st, t, x, y, s); break;
+    }
+  }
+}
+
+function drawMe(st, t, x, y, s) {
+  // uitlaatwolkjes
+  const w = 1.8 * s, ex = x - w * .32, ey = y - .27 * s;
+  const inten = st.running ? .12 + st.gas * .55 : 0;
+  for (const p of TL.E.puffs) {
+    const age = t - p.t;
+    if (age > 0 && age < 1.6) for (let k = 0; k < 6; k++) {
+      const a = age / 1.6, r = 10 + a * 70 + k * 6;
+      ctx.fillStyle = `rgba(90,96,110,${(1 - a) * .45})`;
+      circle(ex - a * 90 - k * 12, ey - a * 30 + Math.sin(k * 2) * 10, r); ctx.fill();
+    }
+  }
+  if (inten > 0) for (let k = 0; k < 7; k++) {
+    const ph = ((st.wt * 2.4 + k / 7) % 1);
+    ctx.fillStyle = `rgba(200,206,216,${(1 - ph) * inten * .5})`;
+    circle(ex - ph * 60 - st.speed * ph * .8, ey + ph * 14 - Math.sin(k * 3.1) * 6 * ph, 6 + ph * 26); ctx.fill();
+  }
+  // lichte inveren/kantelen bij acceleratie
+  const lean = (st.gas - .2) * 3;
+  drawCarRear(x, y + lean * .2, s, '#2c8fd6', true, st, t);
+}
+
+/* ---------- binnenspiegel ---------- */
+function drawMirror(st, t) {
+  const x = 650, y = 14, w = 300, h = 90;
+  ctx.save();
+  ctx.fillStyle = '#0c111c'; rr(x, y, w, h, 18); ctx.fill();
+  ctx.strokeStyle = '#2a3552'; ctx.lineWidth = 2; ctx.stroke();
+  rr(x + 6, y + 6, w - 12, h - 12, 13); ctx.clip();
+  const hy = y + 34, cx = 800, Fm = 260;
+  let g = ctx.createLinearGradient(0, y, 0, hy); g.addColorStop(0, '#5aa9ea'); g.addColorStop(1, '#cfeafc');
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, hy - y);
+  ctx.fillStyle = '#62b968'; ctx.fillRect(x, hy, w, y + h - hy);
+  const P = (X, z) => [cx + X * Fm / z, hy + 1.0 * Fm / z];
+  // weg
+  const a = P(-RW - CAMX, 1.2), b = P(RW - CAMX, 1.2), c = P(RW - CAMX, 400), e = P(-RW - CAMX, 400);
+  ctx.fillStyle = '#4b5160'; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.lineTo(...c); ctx.lineTo(...e); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#f3f3f3';
+  for (let k = 0; k < 14; k++) {
+    const z1 = k * 15 + (st.dist % 15) + 1.2, z2 = z1 + 5;
+    const p1 = P(-CAMX - .1, z1), p2 = P(-CAMX + .1, z1), p3 = P(-CAMX + .1, z2), p4 = P(-CAMX - .1, z2);
+    ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.lineTo(...p4); ctx.closePath(); ctx.fill();
+  }
+  // auto's achter ons
+  const cars = [];
+  for (const c of LEFTCARS) { const rel = c.z0 + c.v / 3.6 * st.wt - st.dist; if (rel < -1 && rel > -150) cars.push({ z: -rel, X: -3.5, col: c.col }); }
+  const fg = followGap(st);
+  const honk = TL.E.honks.find(hh => t >= hh.t && t < hh.t + hh.dur);
+  cars.push({ z: fg, X: 0, col: '#e5e8ef', follow: true });
+  cars.sort((p, q) => q.z - p.z);
+  for (const c of cars) {
+    const [px, py] = P(c.X, c.z);
+    drawCarFront(px, py, Fm / c.z, c.col, c.follow && honk && Math.sin((t - honk.t) * 22) > 0);
+  }
+  // glans
+  g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(.35, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,.06)');
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(200,210,235,.75)'; ctx.font = `700 11px ${FONT}`; ctx.textAlign = 'center';
+  ctx.fillText('BINNENSPIEGEL', cx, y + h + 14);
+  if (honk) {
+    const age = t - honk.t, pop = clamp(age / .15) * clamp((honk.dur - age) / .2);
+    const bx = x + w + 70, by = y + 44;
+    ctx.save(); ctx.translate(bx, by); ctx.scale(.7 + .3 * pop + .05 * Math.sin(age * 30), .7 + .3 * pop + .05 * Math.sin(age * 30));
+    ctx.globalAlpha = pop;
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) { const a2 = i / 16 * Math.PI * 2, r = i % 2 ? 34 : 50; ctx.lineTo(Math.cos(a2) * r * 1.35, Math.sin(a2) * r * .8); }
+    ctx.closePath(); ctx.fillStyle = '#ffd23f'; ctx.fill(); ctx.strokeStyle = '#ff4b5c'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#b3121f'; ctx.font = `900 24px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('TOET!', 0, 1); ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+  }
+}
+
+/* ---------- paneel: pedalen ---------- */
+function pill(x, y, text, bg, fg, align = 'left') {
+  ctx.font = `800 11px ${FONT}`;
+  const w = ctx.measureText(text).width + 16;
+  const xx = align === 'right' ? x - w : x;
+  ctx.fillStyle = bg; rr(xx, y - 14, w, 20, 10); ctx.fill();
+  ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText(text, xx + 8, y + 0);
+  return w;
+}
+
+function drawPedal(ox, oy, p, isClutch, st, t) {
+  const vel = isClutch ? st.clutchV : st.gasV;
+  const inBite = isClutch && p > .43 && p < .64 && st.gear > 0;
+  const accent = isClutch ? (inBite ? '#33e089' : '#3ab7ff') : '#33e089';
+  const act = isClutch ? clamp(Math.max(p > .03 ? .5 + .5 * p : 0, Math.abs(vel) * 1.5)) : clamp(p * 2.4 + Math.abs(vel));
+  // slagbalk
+  const bx = ox + 4, by = oy + 10, bw = 14, bh = 152;
+  rr(bx, by, bw, bh, 7); ctx.fillStyle = '#0a1122'; ctx.fill(); ctx.strokeStyle = '#26324f'; ctx.lineWidth = 1.5; ctx.stroke();
+  if (isClutch) {
+    const y1 = by + .45 * bh, y2 = by + .62 * bh;
+    ctx.save();
+    if (inBite) { ctx.shadowColor = '#33e089'; ctx.shadowBlur = 18; }
+    ctx.fillStyle = inBite ? `rgba(51,224,137,${.65 + .35 * Math.sin(t * 10)})` : 'rgba(51,224,137,.3)';
+    rr(bx - 4, y1, bw + 8, y2 - y1, 4); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = inBite ? '#8dffc4' : '#4fa77a'; ctx.font = `800 10px ${FONT}`; ctx.textAlign = 'left';
+    ctx.fillText('AP', bx + bw + 6, (y1 + y2) / 2 + 4);
+  }
+  if (p > .005) {
+    ctx.save(); ctx.shadowColor = accent; ctx.shadowBlur = 10 * act;
+    rr(bx + 2, by + 2, bw - 4, (bh - 4) * p, 5); ctx.fillStyle = accent; ctx.globalAlpha = .9; ctx.fill(); ctx.restore();
+  }
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); const my = by + bh * p; ctx.moveTo(bx - 2, my); ctx.lineTo(bx - 9, my - 5); ctx.lineTo(bx - 9, my + 5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = act > .1 ? accent : '#8b97b6'; ctx.font = `800 15px ${FONT}`; ctx.textAlign = 'left';
+  ctx.fillText(Math.round(p * 100) + '%', ox, oy + 186);
+
+  // geometrie (zijaanzicht)
+  const P = { x: ox + 128, y: oy + 4 }, Lr = 118;
+  const th = lerp(-.2, isClutch ? .46 : .36, p);
+  const sn = Math.sin(th), cs = Math.cos(th);
+  const pad = { x: P.x - Lr * sn, y: P.y + Lr * cs };
+  const C = { x: pad.x + cs * 8, y: pad.y + sn * 8 };
+  const floorY = oy + 178;
+  ctx.strokeStyle = '#26324f'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(ox + 40, oy + 118); ctx.lineTo(ox + 72, floorY + 5); ctx.lineTo(ox + 252, floorY + 5); ctx.stroke();
+  const Ls = 98, dyy = floorY - C.y, dxx = Math.sqrt(Math.max(0, Ls * Ls - dyy * dyy));
+  const Hh = { x: C.x + dxx, y: floorY };
+  const phi = Math.atan2(C.y - Hh.y, C.x - Hh.x), cp = Math.cos(phi), sp = Math.sin(phi);
+  const loc = (lx, ly) => ({ x: Hh.x + lx * cp - ly * sp, y: Hh.y + lx * sp + ly * cp });
+  const ank = loc(18, 32), knee = { x: Math.min(Hh.x + 34, ox + 246), y: oy - 4 };
+  // been
+  ctx.strokeStyle = '#243150'; ctx.lineWidth = 26; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(ank.x, ank.y); ctx.lineTo(knee.x, knee.y); ctx.stroke();
+  ctx.strokeStyle = '#3a4a70'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(ank.x - 13, ank.y - 6); ctx.lineTo(ank.x + 14, ank.y + 4); ctx.stroke();
+  // pedaalarm
+  ctx.save();
+  if (act > .05) { ctx.shadowColor = accent; ctx.shadowBlur = 16 * act; }
+  ctx.strokeStyle = act > .05 ? mixCol('#7d8aa8', accent, act) : '#7d8aa8'; ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(pad.x, pad.y); ctx.stroke();
+  ctx.translate(pad.x, pad.y); ctx.rotate(th);
+  rr(-7, -25, 14, 50, 5); ctx.fillStyle = act > .05 ? mixCol('#c9d1e3', accent, act) : '#c9d1e3'; ctx.fill();
+  ctx.restore();
+  circle(P.x, P.y, 7); ctx.fillStyle = '#3a4766'; ctx.fill(); ctx.strokeStyle = '#8b97b6'; ctx.lineWidth = 2; ctx.stroke();
+  // ring rond pad bij aangrijpingspunt
+  if (inBite) {
+    ctx.strokeStyle = `rgba(51,224,137,${.5 + .5 * Math.sin(t * 9)})`; ctx.lineWidth = 3;
+    circle(pad.x, pad.y, 34 + 4 * Math.sin(t * 9)); ctx.stroke();
+  }
+  // schoen
+  ctx.save(); ctx.translate(Hh.x, Hh.y); ctx.rotate(phi);
+  ctx.beginPath();
+  ctx.moveTo(-6, -2); ctx.lineTo(Ls + 3, -2);
+  ctx.quadraticCurveTo(Ls + 11, 8, Ls - 4, 16);
+  ctx.lineTo(42, 25); ctx.quadraticCurveTo(28, 36, 12, 37); ctx.lineTo(0, 35);
+  ctx.quadraticCurveTo(-13, 22, -6, -2); ctx.closePath();
+  ctx.fillStyle = '#4b5a7e'; ctx.fill(); ctx.strokeStyle = '#7f90b8'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = '#c3cde4'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-5, -2); ctx.lineTo(Ls + 2, -2); ctx.stroke();
+  ctx.strokeStyle = '#55668f'; ctx.lineWidth = 1.5;
+  for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(48 + i * 10, 22 - i * 2); ctx.lineTo(54 + i * 10, 15 - i * 2); ctx.stroke(); }
+  ctx.restore();
+  // label + status
+  ctx.fillStyle = '#e6ecfb'; ctx.font = `800 16px ${FONT}`; ctx.textAlign = 'left';
+  const name = isClutch ? 'KOPPELING' : 'GAS';
+  ctx.fillText(name, ox + 30, oy + 210);
+  const nw = ctx.measureText(name).width;
+  ctx.fillStyle = '#7f8bab'; ctx.font = `600 12px ${FONT}`;
+  ctx.fillText(isClutch ? 'linkervoet' : 'rechtervoet', ox + 30, oy + 226);
+  let stt, bg, fg = '#04111f';
+  if (isClutch) {
+    if (inBite) { stt = 'AANGRIJPINGSPUNT'; bg = '#33e089'; }
+    else if (p > .95) { stt = 'INGETRAPT'; bg = '#3ab7ff'; }
+    else if (vel < -.12) { stt = 'KOMT OP'; bg = '#3ab7ff'; }
+    else if (vel > .12) { stt = 'GAAT IN'; bg = '#3ab7ff'; }
+    else if (p < .03) { stt = 'LOS'; bg = '#253150'; fg = '#9aa7c7'; }
+    else { stt = 'HALF'; bg = '#3ab7ff'; }
+  } else {
+    if (p < .02) { stt = 'LOS'; bg = '#253150'; fg = '#9aa7c7'; }
+    else if (p < .26) { stt = 'LICHT GAS'; bg = '#33e089'; }
+    else if (p < .7) { stt = 'GAS'; bg = '#33e089'; }
+    else { stt = 'VOL GAS'; bg = '#ffbf3f'; }
+  }
+  pill(ox + 38 + nw, oy + 210, stt, bg, fg);
+}
+function mixCol(a, b, f) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = lerp(pa >> 16, pb >> 16, f), g = lerp((pa >> 8) & 255, (pb >> 8) & 255, f), bl = lerp(pa & 255, pb & 255, f);
+  return `rgb(${r | 0},${g | 0},${bl | 0})`;
+}
+
+/* ---------- paneel: dashboard ---------- */
+function gauge(cx, cy, r, val, max, o) {
+  const lit = o.lit;
+  const A0 = Math.PI * .75, SW = Math.PI * 1.5, ang = x => A0 + SW * clamp(x / max);
+  let g = ctx.createRadialGradient(cx, cy - r * .3, r * .1, cx, cy, r);
+  g.addColorStop(0, '#1c2848'); g.addColorStop(1, '#080d1a');
+  circle(cx, cy, r); ctx.fillStyle = g; ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#27324f'; ctx.stroke();
+  if (lit > .3) { circle(cx, cy, r - 4); ctx.strokeStyle = `rgba(58,183,255,${.28 * lit})`; ctx.lineWidth = 2; ctx.stroke(); }
+  for (const z of o.zones) {
+    ctx.save();
+    if (z.glow) { ctx.shadowColor = z.col; ctx.shadowBlur = z.glow; }
+    ctx.beginPath(); ctx.arc(cx, cy, r - 13, ang(z.a), ang(z.b));
+    ctx.strokeStyle = z.col; ctx.lineWidth = z.w || 8; ctx.lineCap = 'butt'; ctx.stroke(); ctx.restore();
+  }
+  ctx.lineCap = 'round'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let k = 0; k <= max + 1e-6; k += o.minor) {
+    const a = ang(k), maj = Math.abs(k / o.major - Math.round(k / o.major)) < 1e-6;
+    const r1 = r - 6, r2 = r - (maj ? 24 : 15);
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+    ctx.strokeStyle = o.tickCol ? o.tickCol(k, lit) : `rgba(225,233,255,${.25 + .75 * lit})`; ctx.lineWidth = maj ? 3 : 1.5; ctx.stroke();
+    if (maj) {
+      ctx.fillStyle = o.tickCol ? o.tickCol(k, lit) : `rgba(225,233,255,${.25 + .75 * lit})`;
+      ctx.font = `700 16px ${FONT}`;
+      ctx.fillText(o.lab(k), cx + Math.cos(a) * (r - 38), cy + Math.sin(a) * (r - 38));
+    }
+  }
+  ctx.fillStyle = `rgba(139,151,182,${.4 + .6 * lit})`; ctx.font = `700 11px ${FONT}`;
+  ctx.fillText(o.title, cx, cy - r * .36);
+  ctx.fillStyle = `rgba(234,240,255,${.2 + .8 * lit})`; ctx.font = `800 24px ${FONT}`;
+  ctx.fillText(o.read, cx, cy + r * .5);
+  ctx.fillStyle = `rgba(139,151,182,${.4 + .6 * lit})`; ctx.font = `600 11px ${FONT}`;
+  ctx.fillText(o.unit, cx, cy + r * .5 + 19);
+  ctx.textBaseline = 'alphabetic';
+  const a = ang(val);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+  ctx.shadowColor = o.nc; ctx.shadowBlur = 4 + 14 * lit;
+  ctx.beginPath(); ctx.moveTo(-16, -4); ctx.lineTo(r - 18, -1.3); ctx.lineTo(r - 18, 1.3); ctx.lineTo(-16, 4); ctx.closePath();
+  ctx.fillStyle = o.nc; ctx.fill(); ctx.restore();
+  circle(cx, cy, 10); ctx.fillStyle = '#1a2238'; ctx.fill(); ctx.strokeStyle = '#3a4766'; ctx.lineWidth = 2; ctx.stroke();
+}
+function lamp(x, y, w, text, on, col) {
+  ctx.save();
+  if (on) { ctx.shadowColor = col; ctx.shadowBlur = 14; }
+  rr(x, y, w, 22, 6); ctx.fillStyle = on ? col : '#151d33'; ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = on ? col : '#26324f'; ctx.lineWidth = 1; rr(x, y, w, 22, 6); ctx.stroke();
+  ctx.fillStyle = on ? '#08101e' : '#3d4a6c'; ctx.font = `800 10px ${FONT}`; ctx.textAlign = 'center';
+  ctx.fillText(text, x + w / 2, y + 15);
+}
+
+function drawDash(c, st, t) {
+  const lit = .2 + .8 * st.dash;
+  const k = st.rpm / 1000;
+  const zoneNow = st.gear > 0 && st.gear < 5 && st.rpm > SHIFT_LO - 50 && st.rpm < SHIFT_HI + 150 && st.gas > .2 && st.clutch < .1;
+  const red = st.rpm > 6000;
+  const tc = c.x + 150, sc = c.x + 490, cy = c.y + 136, r = 104;
+  gauge(tc, cy, r, k, 7, {
+    lit, major: 1, minor: .5, lab: v => v, title: 'TPM × 1000', unit: 'toeren per minuut',
+    read: st.dash > .3 ? String(Math.round(st.rpm / 10) * 10) : '—',
+    nc: red ? '#ff4b5c' : zoneNow ? '#33e089' : '#ff8a3d',
+    zones: [
+      { a: SHIFT_LO / 1000, b: SHIFT_HI / 1000, col: zoneNow ? `rgba(51,224,137,${.75 + .25 * Math.sin(t * 12)})` : `rgba(51,224,137,${.35 * lit})`, w: zoneNow ? 11 : 8, glow: zoneNow ? 16 : 0 },
+      { a: 6, b: 7, col: red ? `rgba(255,75,92,${.8 + .2 * Math.sin(t * 20)})` : `rgba(255,75,92,${.6 * lit})`, w: red ? 12 : 8, glow: red ? 20 : 0 }
+    ],
+    tickCol: (v, l) => v >= 6 ? `rgba(255,110,120,${.3 + .7 * l})` : `rgba(225,233,255,${.25 + .75 * l})`
+  });
+  const at80 = st.speed > 78.5 && st.gear === 5;
+  const rg = st.moving ? st.gTarget : st.gear;
+  const range = GEAR_RANGE[rg];
+  const zones = [];
+  if (range && st.dash > .3) {
+    const inR = st.speed >= range[0] - 1 && st.speed <= range[1] + 1;
+    zones.push({ a: range[0], b: range[1], col: inR ? 'rgba(58,183,255,.85)' : 'rgba(255,75,92,.8)', w: 10, glow: 12 });
+  }
+  zones.push({ a: 79, b: 81, col: at80 ? '#33e089' : `rgba(51,224,137,${.45 * lit})`, w: at80 ? 12 : 8, glow: at80 ? 14 : 0 });
+  gauge(sc, cy, r, st.speed, 100, {
+    lit, major: 20, minor: 5, lab: v => v, title: 'KM/U',
+    unit: range ? `${rg}e: ${range[0]}–${range[1]} km/u` : 'snelheid',
+    read: st.dash > .3 ? String(Math.round(st.speed)) : '—',
+    nc: at80 ? '#33e089' : '#ff8a3d',
+    zones,
+  });
+  // versnellingsindicator
+  const gx = c.x + 262, gy = c.y + 34;
+  rr(gx, gy, 116, 104, 14); ctx.fillStyle = '#0a1020'; ctx.fill(); ctx.strokeStyle = '#26324f'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = `rgba(139,151,182,${.4 + .6 * lit})`; ctx.font = `700 11px ${FONT}`; ctx.textAlign = 'center';
+  ctx.fillText('VERSNELLING', gx + 58, gy + 20);
+  const gtxt = st.moving ? '·' : (st.gear === 0 ? 'N' : String(st.gear));
+  ctx.save();
+  const gcol = st.moving ? '#3ab7ff' : st.gear === 0 ? '#ffbf3f' : '#33e089';
+  if (st.dash > .3) { ctx.shadowColor = gcol; ctx.shadowBlur = 18; }
+  ctx.fillStyle = st.dash > .3 ? gcol : '#2a3554'; ctx.font = `900 62px ${FONT}`;
+  ctx.fillText(gtxt, gx + 58, gy + 88);
+  ctx.restore();
+  // lampjes
+  const lamps = st.dash > .5 && !st.running && st.rpm < 300;
+  lamp(gx, c.y + 152, 54, 'ACCU', lamps, '#ff4b5c');
+  lamp(gx + 62, c.y + 152, 54, 'OLIE', lamps, '#ff4b5c');
+  lamp(gx, c.y + 182, 54, 'CONTACT', st.ign > .3, '#ffbf3f');
+  lamp(gx + 62, c.y + 182, 54, '▲ OP', zoneNow, '#33e089');
+  lamp(gx, c.y + 212, 116, red ? 'TOERENTAL TE HOOG' : 'SCHAKEL 2000–2500', red || zoneNow, red ? '#ff4b5c' : '#33e089');
+}
+
+/* ---------- paneel: pook ---------- */
+function drawShifter(c, st, t) {
+  const gx = c.x + 140, gy = c.y + 146, dx = 62, dy = 58;
+  const pos = g => [gx + GP[g][0] * dx, gy + GP[g][1] * dy];
+  // groef
+  const groove = (lw, col) => {
+    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(gx - dx, gy); ctx.lineTo(gx + dx, gy);
+    for (const k of [-1, 0, 1]) { ctx.moveTo(gx + k * dx, gy - dy); ctx.lineTo(gx + k * dx, gy + dy); }
+    ctx.stroke();
+  };
+  groove(22, '#26324f'); groove(16, '#060a14');
+  // labels
+  const labels = [[1, -1, -1], [2, -1, 1], [3, 0, -1], [4, 0, 1], [5, 1, -1], ['R', 1, 1]];
+  for (const [lb, cx, ry] of labels) {
+    const x = gx + cx * dx, y = gy + ry * (dy + 27);
+    const cur = !st.moving && st.gear === lb, tgt = st.moving && st.gTarget === lb;
+    ctx.save();
+    if (cur || tgt) { ctx.shadowColor = cur ? '#33e089' : '#3ab7ff'; ctx.shadowBlur = 16; }
+    circle(x, y, 14); ctx.fillStyle = cur ? '#33e089' : tgt ? '#3ab7ff' : '#18223b'; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = cur || tgt ? '#04111f' : '#8b97b6'; ctx.font = `800 15px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(lb), x, y + 1); ctx.textBaseline = 'alphabetic';
+  }
+  // N-markering
+  ctx.fillStyle = (!st.moving && st.gear === 0) ? '#ffbf3f' : '#4a5677'; ctx.font = `800 12px ${FONT}`; ctx.textAlign = 'center';
+  ctx.fillText('N', gx + dx * .5, gy - 9);
+  // knop
+  const kx = gx + st.knob[0] * dx, ky = gy + st.knob[1] * dy;
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; circle(kx + 4, ky + 6, 24); ctx.fill();
+  ctx.save();
+  if (st.moving) { ctx.shadowColor = '#3ab7ff'; ctx.shadowBlur = 28; }
+  const g = ctx.createRadialGradient(kx - 7, ky - 8, 2, kx, ky, 24);
+  g.addColorStop(0, st.moving ? '#a8e2ff' : '#5b6a90'); g.addColorStop(1, st.moving ? '#1f6fae' : '#141b2e');
+  circle(kx, ky, 22); ctx.fillStyle = g; ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = st.moving ? '#bfe8ff' : '#6b7aa0'; ctx.lineWidth = 2; circle(kx, ky, 22); ctx.stroke();
+  // mini H-patroon op knop
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(kx - 8, ky); ctx.lineTo(kx + 8, ky);
+  for (const k of [-8, 0, 8]) { ctx.moveTo(kx + k, ky - 7); ctx.lineTo(kx + k, ky + 7); } ctx.stroke();
+  // grote stand
+  const sx = c.x + c.w - 44;
+  ctx.fillStyle = '#7f8bab'; ctx.font = `700 11px ${FONT}`; ctx.textAlign = 'center';
+  ctx.fillText('STAND', sx, c.y + 62);
+  const txt = st.moving ? `${st.gFrom === 0 ? 'N' : st.gFrom}→${st.gTarget}` : (st.gear === 0 ? 'N' : String(st.gear));
+  ctx.save();
+  const col = st.moving ? '#3ab7ff' : st.gear === 0 ? '#ffbf3f' : '#33e089';
+  ctx.shadowColor = col; ctx.shadowBlur = 16;
+  ctx.fillStyle = col; ctx.font = `900 ${st.moving ? 28 : 56}px ${FONT}`;
+  ctx.fillText(txt, sx, c.y + (st.moving ? 112 : 120));
+  ctx.restore();
+  if (st.moving) {
+    ctx.fillStyle = '#3ab7ff'; ctx.font = `800 11px ${FONT}`;
+    ctx.fillText('VIA', sx, c.y + 150); ctx.fillText('NEUTRAAL', sx, c.y + 165);
+  }
+}
+
+function drawCard(c, title, glow, accent) {
+  rr(c.x, c.y, c.w, c.h, 18); ctx.fillStyle = '#0f172b'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1.5; ctx.stroke();
+  if (glow > .01) {
+    ctx.save(); ctx.shadowColor = accent; ctx.shadowBlur = 26 * glow;
+    ctx.strokeStyle = accent; ctx.globalAlpha = .85 * glow; ctx.lineWidth = 3; rr(c.x, c.y, c.w, c.h, 18); ctx.stroke(); ctx.restore();
+  }
+  ctx.fillStyle = '#7f8bab'; ctx.font = `800 12px ${FONT}`; ctx.textAlign = 'left';
+  ctx.fillText(title, c.x + 18, c.y + 24);
+}
+
+const C1 = { x: 16, y: 630, w: 560, h: 258 }, C2 = { x: 592, y: 630, w: 640, h: 258 }, C3 = { x: 1248, y: 630, w: 336, h: 258 };
+function withScale(c, s, fn) {
+  ctx.save(); const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+  ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); fn(); ctx.restore();
+}
+
+function drawPanel(st, t) {
+  let g = ctx.createLinearGradient(0, 600, 0, 632);
+  g.addColorStop(0, 'rgba(6,10,22,0)'); g.addColorStop(1, 'rgba(6,10,22,.97)');
+  ctx.fillStyle = g; ctx.fillRect(0, 600, W, 32);
+  ctx.fillStyle = 'rgba(6,10,22,.97)'; ctx.fillRect(0, 632, W, H - 632);
+  const f = st.focus;
+  const pedAct = Math.max(clamp(Math.abs(st.clutchV)), st.clutch > .43 && st.clutch < .64 && st.gear > 0 ? 1 : 0, clamp(st.gas * 2));
+  withScale(C1, 1 + .035 * f, () => {
+    drawCard(C1, 'PEDALEN  ·  voetenwerk', Math.max(f, pedAct * .6), st.clutch > .43 && st.clutch < .64 && st.gear > 0 ? '#33e089' : '#3ab7ff');
+    drawPedal(C1.x + 18, C1.y + 34, st.clutch, true, st, t);
+    drawPedal(C1.x + 294, C1.y + 34, st.gas, false, st, t);
+  });
+  drawCard(C2, 'DASHBOARD', st.limit > .1 || st.rpm > 6000 ? 1 : 0, '#ff4b5c');
+  drawDash(C2, st, t);
+  withScale(C3, 1 + .035 * f, () => {
+    drawCard(C3, 'VERSNELLINGSPOOK', Math.max(f * .8, st.moving), '#3ab7ff');
+    drawShifter(C3, st, t);
+  });
+}
+
+/* ---------- effecten ---------- */
+function drawConfetti(t) {
+  const age = t - TL.tFinal; if (age < 0) return;
+  const cols = ['#33e089', '#3ab7ff', '#ffd24a', '#ff6b8b', '#ffffff'];
+  const fade = clamp(1 - (age - 4) / 2);
+  if (fade <= 0) return;
+  for (let i = 0; i < 110; i++) {
+    const x0 = hash(i * 1.7) * W, sp = 120 + hash(i * 2.9) * 170;
+    const y = -30 + age * sp - hash(i * 4.1) * 200;
+    if (y < -20 || y > 615) continue;
+    const x = x0 + Math.sin(age * 2 + i) * 30;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(age * (2 + hash(i) * 4) + i);
+    ctx.globalAlpha = fade; ctx.fillStyle = cols[i % cols.length];
+    ctx.fillRect(-5, -3, 10, 6); ctx.restore();
+  }
+}
+
+function render(t) {
+  const st = stateAt(t);
+  ctx.setTransform(SC * DPR, 0, 0, SC * DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  // wereld met trilling
+  const sh = st.shake * 4 + st.limit * 1.5;
+  ctx.save();
+  ctx.translate(sh * Math.sin(t * 53), sh * Math.cos(t * 47));
+  drawWorld(st, t);
+  ctx.restore();
+  // fout-insert tint
+  if (st.insert > 0) {
+    ctx.fillStyle = 'rgba(120,10,30,.16)'; ctx.fillRect(0, 0, W, 612);
+    const g = ctx.createRadialGradient(800, 330, 300, 800, 330, 900);
+    g.addColorStop(0, 'rgba(160,0,30,0)'); g.addColorStop(1, 'rgba(160,0,30,.55)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 612);
+    // tape-rand
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, 612); ctx.rect(14, 14, W - 28, 584); ctx.clip('evenodd');
+    for (let x = -40; x < W + 40; x += 40) { ctx.fillStyle = (x / 40) % 2 ? '#ffbf3f' : '#1a1a1a'; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 20, 0); ctx.lineTo(x - 20 + 612, 612); ctx.lineTo(x - 40 + 612, 612); ctx.closePath(); ctx.globalAlpha = .55; ctx.fill(); }
+    ctx.restore();
+  }
+  drawMirror(st, t);
+  if (st.focus > .01) { ctx.fillStyle = `rgba(4,8,18,${.42 * st.focus})`; ctx.fillRect(0, 0, W, 612); }
+  drawPanel(st, t);
+  // waarschuwingsrand
+  const w = TL.E.warns.find(x => t >= x.t && t < x.t + x.dur);
+  if (w) {
+    const age = t - w.t, a = clamp(age / .15) * clamp((w.dur - age) / .3) * (.55 + .45 * Math.sin(age * 14));
+    ctx.save(); ctx.shadowColor = '#ff2a40'; ctx.shadowBlur = 40;
+    ctx.strokeStyle = `rgba(255,60,80,${a})`; ctx.lineWidth = 14; ctx.strokeRect(7, 7, W - 14, H - 14); ctx.restore();
+    // icoon
+    ctx.save(); ctx.globalAlpha = clamp(age / .15) * clamp((w.dur - age) / .3);
+    const ix = 1500, iy = 150, s = 1 + .08 * Math.sin(age * 14);
+    ctx.translate(ix, iy); ctx.scale(s, s);
+    ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(50, 40); ctx.lineTo(-50, 40); ctx.closePath();
+    ctx.fillStyle = '#ff4b5c'; ctx.shadowColor = '#ff2a40'; ctx.shadowBlur = 30; ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.font = `900 54px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText('!', 0, 32);
+    ctx.restore();
+  }
+  drawConfetti(t);
+  // overgang + terugspoelen
+  if (st.fade > .001) {
+    ctx.fillStyle = `rgba(3,5,12,${st.fade})`; ctx.fillRect(0, 0, W, H);
+    const rw = TL.E.rewinds.find(x => t >= x.t && t < x.t1);
+    if (rw) {
+      ctx.globalAlpha = st.fade;
+      ctx.fillStyle = 'rgba(255,255,255,.05)';
+      for (let y = (t * 900) % 12; y < H; y += 12) ctx.fillRect(0, y, W, 3);
+      ctx.fillStyle = '#fff'; ctx.font = `900 54px ${FONT}`; ctx.textAlign = 'center';
+      ctx.fillText('◀◀  Terugspoelen', 800, 420);
+      ctx.fillStyle = '#8dffc4'; ctx.font = `700 26px ${FONT}`;
+      ctx.fillText('…en nu weer zoals het hoort', 800, 470);
+      ctx.globalAlpha = 1;
+    } else if (st.insert > 0 || TL.T.insert.at(t + .6) > 0) {
+      ctx.globalAlpha = st.fade;
+      ctx.fillStyle = '#ffbf3f'; ctx.font = `900 54px ${FONT}`; ctx.textAlign = 'center';
+      ctx.fillText('Wat als…?', 800, 430);
+      ctx.globalAlpha = 1;
+    }
+  }
+  updateDOM(st, t);
+  updAudio(st);
+}
+
+/* =========================================================================
+   DOM-overlays
+   ========================================================================= */
+const $ = id => document.getElementById(id);
+const elMain = $('capMain'), elTip = $('tip'), elBig = $('big'), elChips = $('chips'), elFinal = $('final');
+const elBanner = $('banner'), elSlow = $('slow'), elChap = $('chapter');
+const ICON = { action: '●', info: 'i', success: '✓', bite: '◎', warn: '!', warnq: '?', zone: '▲' };
+
+function activeOf(list, t) { let c = null; for (const x of list) { if (x.t > t) break; if (t < x.t + x.dur) c = x; } return c; }
+function animOf(c, t) { const age = t - c.t; const inA = clamp(age / .3), out = clamp((c.dur - age) / .3); return { op: Math.min(inA, out), k: EASE.out(inA), age }; }
+
+let lastSeq = null, lastChap = null, lastIns = -1;
+function updateDOM(st, t) {
+  // hoofdtekst
+  const m = activeOf(CH.main, t);
+  if (elMain._c !== m) {
+    elMain._c = m;
+    if (m) {
+      elMain.className = 'ov cap k-' + m.kind;
+      elMain.querySelector('.ic').textContent = ICON[m.kind] || '●';
+      elMain.querySelector('.ct').innerHTML = m.title;
+      elMain.querySelector('.cs').innerHTML = m.sub || '';
+    }
+  }
+  if (m) {
+    const a = animOf(m, t);
+    const pulse = m.kind === 'bite' || m.kind === 'warn' ? 1 + .025 * Math.sin(a.age * 10) : 1;
+    elMain.style.opacity = a.op;
+    elMain.style.transform = `translateX(-50%) translateY(${(1 - a.k) * 18}px) scale(${(.9 + .1 * a.k) * pulse})`;
+  } else elMain.style.opacity = 0;
+
+  // tip
+  const tp = activeOf(CH.tip, t);
+  if (elTip._c !== tp) { elTip._c = tp; if (tp) elTip.innerHTML = tp.title; }
+  if (tp) { const a = animOf(tp, t); elTip.style.opacity = a.op; elTip.style.transform = `translateX(${(1 - a.k) * -24}px)`; }
+  else elTip.style.opacity = 0;
+
+  // grote titel
+  const b = activeOf(CH.big, t);
+  if (elBig._c !== b) { elBig._c = b; if (b) { elBig.querySelector('.bt').innerHTML = b.title; elBig.querySelector('.bs').innerHTML = b.sub || ''; } }
+  if (b) { const a = animOf(b, t); elBig.style.opacity = a.op; elBig.style.transform = `translateX(-50%) scale(${.92 + .08 * a.k})`; }
+  else elBig.style.opacity = 0;
+
+  // schakel-chips
+  let seq = null;
+  for (const s of TL.E.seqs) if (t >= s.t0 - .3 && t < s.t0 + s.P.ga[1] + .8) seq = s;
+  if (seq !== lastSeq) {
+    lastSeq = seq;
+    if (seq) {
+      const names = ['Gas los', 'Koppeling in', `Pook ${seq.from} → ${seq.to}`, 'Koppeling op', 'Gas erbij'];
+      elChips.innerHTML = names.map((n, i) => `<span class="chip"><span class="n">${i + 1}</span>${n}</span>`).join('');
+    }
+  }
+  if (seq) {
+    const u = t - seq.t0, P = seq.P, win = [P.go, P.ci, P.pk, P.cu, P.ga];
+    [...elChips.children].forEach((ch, i) => {
+      const on = u >= win[i][0] && u < win[i][1] + .05, done = u >= win[i][1] + .05;
+      ch.className = 'chip' + (on ? ' on' : done ? ' done' : '');
+    });
+    const op = clamp((u + .3) / .3) * clamp((P.ga[1] + .8 - u) / .4);
+    elChips.style.opacity = op;
+    elChips.style.transform = `translateX(-50%) translateY(${(1 - op) * 10}px)`;
+  } else elChips.style.opacity = 0;
+
+  // hoofdstuk
+  let chap = null, idx = 0;
+  TL.E.chapters.forEach((c, i) => { if (c.t <= t) { chap = c; idx = i; } });
+  if (chap !== lastChap) {
+    lastChap = chap;
+    if (chap) {
+      elChap.className = 'ov' + (chap.kind === 'warn' ? ' warn' : '');
+      elChap.querySelector('.num').textContent = chap.kind === 'warn' ? '⚠' : String(idx + 1).padStart(2, '0');
+      elChap.querySelector('.lb').textContent = chap.label;
+    }
+  }
+  // insert-banner
+  if (st.insert !== lastIns) {
+    lastIns = st.insert;
+    if (st.insert > 0) elBanner.textContent = `WAT ALS…?  ·  FOUT ${st.insert} / 3`;
+  }
+  elBanner.style.opacity = st.insert > 0 ? 1 : 0;
+  elSlow.style.opacity = st.slow < .9 && st.insert === 0 ? 1 : 0;
+
+  // finale
+  const fa = clamp((t - TL.tFinal) / .7);
+  elFinal.style.opacity = fa;
+  elFinal.style.transform = `scale(${.94 + .06 * EASE.out(fa)})`;
+  elFinal.style.pointerEvents = fa > .5 ? 'auto' : 'none';
+}
+
+/* =========================================================================
+   Geluid (gesynthetiseerde motor)
+   ========================================================================= */
+let audio = null, soundOn = false;
+function initAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  const ac = new AC();
+  const o1 = ac.createOscillator(); o1.type = 'sawtooth';
+  const o2 = ac.createOscillator(); o2.type = 'square';
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 400; f.Q.value = 2;
+  const g = ac.createGain(); g.gain.value = 0;
+  const g2 = ac.createGain(); g2.gain.value = .35;
+  o1.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(ac.destination);
+  o1.start(); o2.start();
+  audio = { ac, o1, o2, f, g };
+}
+function updAudio(st) {
+  if (!audio) return;
+  const now = audio.ac.currentTime;
+  const fr = Math.max(18, st.rpm / 60 * 2);
+  audio.o1.frequency.setTargetAtTime(fr, now, .03);
+  audio.o2.frequency.setTargetAtTime(fr * .5, now, .03);
+  audio.f.frequency.setTargetAtTime(220 + st.gas * 1400 + st.rpm * .12, now, .05);
+  const vol = soundOn && playing && st.rpm > 60 ? .035 + st.gas * .06 : 0;
+  audio.g.gain.setTargetAtTime(vol, now, .05);
+}
+
+/* =========================================================================
+   Afspelen & besturing
+   ========================================================================= */
+const wrap = $('wrap'), stage = $('stage'), bar = $('bar');
+const scrub = $('scrub'), btnPlay = $('play'), timeEl = $('time');
+let time = 0, playing = true, rate = 1, last = performance.now(), scrubbing = false;
+
+function fit() {
+  const bw = innerWidth - 20, bh = innerHeight - 20 - 64;
+  SC = Math.max(.15, Math.min(bw / W, bh / H));
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  wrap.style.width = W * SC + 'px'; wrap.style.height = H * SC + 'px';
+  stage.style.transform = `scale(${SC})`;
+  bar.style.width = Math.min(innerWidth - 20, Math.max(W * SC, 300)) + 'px';
+  cv.width = Math.round(W * SC * DPR); cv.height = Math.round(H * SC * DPR);
+  render(time);
+}
+const fmt = s => { s = Math.max(0, s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + String(r).padStart(2, '0'); };
+function setPlaying(p) { playing = p; btnPlay.textContent = p ? '❚❚' : '▶'; }
+function restart() { time = 0; setPlaying(true); }
+
+function frame(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (playing && !scrubbing) {
+    time += dt * rate;
+    if (time >= TL.total) { time = TL.total; setPlaying(false); }
+  }
+  render(time);
+  if (!scrubbing) scrub.value = time;
+  timeEl.textContent = fmt(time) + ' / ' + fmt(TL.total);
+  requestAnimationFrame(frame);
+}
+
+btnPlay.onclick = () => { if (!playing && time >= TL.total) time = 0; setPlaying(!playing); };
+$('restart').onclick = restart;
+$('again').onclick = restart;
+scrub.addEventListener('input', () => { scrubbing = true; time = +scrub.value; });
+scrub.addEventListener('change', () => { scrubbing = false; });
+scrub.addEventListener('pointerup', () => { scrubbing = false; });
+$('rate').onchange = e => { rate = +e.target.value; };
+$('inserts').onchange = e => { prepare(e.target.checked); lastSeq = lastChap = null; lastIns = -1; time = 0; setPlaying(true); };
+$('snd').onclick = () => {
+  if (!audio) initAudio();
+  soundOn = !soundOn;
+  if (audio && audio.ac.state === 'suspended') audio.ac.resume();
+  $('snd').textContent = 'Geluid: ' + (soundOn ? 'aan' : 'uit');
+};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  if (e.code === 'Space') { e.preventDefault(); btnPlay.click(); }
+  else if (e.code === 'ArrowRight') { time = Math.min(TL.total, time + 5); }
+  else if (e.code === 'ArrowLeft') { time = Math.max(0, time - 5); }
+});
+addEventListener('resize', fit);
+addEventListener('load', fit);
+
+prepare(true);
+fit();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
